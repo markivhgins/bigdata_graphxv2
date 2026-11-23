@@ -1,9 +1,0 @@
-{
-  "name": "Synthetic Social Network Demonstration Dataset",
-  "type": "synthetic",
-  "real_world_data": false,
-  "description": "60 synthetic user IDs arranged into three disconnected dense groups of 20 users each, with hub-like users inside each group.",
-  "format": "Whitespace-delimited undirected edge list; one relationship per line.",
-  "attribution": "Generated specifically for this project. No personal data and no external dataset attribution required.",
-  "note": "This is not the Stanford SNAP Facebook dataset. The three disconnected groups are intentionally synthetic so Connected Components can be demonstrated clearly."
-}

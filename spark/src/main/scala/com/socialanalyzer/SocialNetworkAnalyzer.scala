@@ -77,8 +77,8 @@ object SocialNetworkAnalyzer {
       }.toSeq.sortBy { case (_, size) => -size }
       val stats = new PrintWriter(new File(outputDir, "graph_stats.json"), "UTF-8")
       try {
-        val sizesJson = componentSizes.map { case (id, size) => s"{\"component_id\":${json(id)},\"size\":$size}" }.mkString(",")
-        stats.println(s"{\"vertices\":$vertexCount,\"edges\":$edgeCount,\"components\":${componentSizes.size},\"engine\":\"Apache Spark GraphX 3.5.3\",\"component_sizes\":[$sizesJson]}")
+        val sizesJson = componentSizes.map { case (id, size) => s"""{"component_id":${json(id)},"size":$size}""" }.mkString(",")
+        stats.println(s"""{"vertices":$vertexCount,"edges":$edgeCount,"components":${componentSizes.size},"engine":"Apache Spark GraphX 3.5.3","component_sizes":[$sizesJson]}""")
       } finally stats.close()
       println(s"GRAPHX_SUCCESS vertices=$vertexCount edges=$edgeCount components=${componentSizes.size}")
       println(s"Results written to ${outputDir.getAbsolutePath}")

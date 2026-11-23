@@ -1,9 +1,11 @@
 __pycache__/
 *.pyc
 .venv/
-spark/target/
-spark/project/target/
-spark/project/project/
+spark/target/*
+!spark/target/scala-2.12/
+spark/target/scala-2.12/*
+!spark/target/scala-2.12/social-network-graphx_2.12-1.0.0.jar
+spark/project/
 .bsp/
 .idea/
 .vscode/

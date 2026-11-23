@@ -46,6 +46,13 @@ def spark_submit_command() -> list[str] | None:
     which_spark = shutil.which("spark-submit")
     if which_spark:
         candidates.append(Path(which_spark))
+    try:
+        import pyspark
+        pyspark_home = Path(pyspark.__file__).parent
+        candidates.append(pyspark_home / "bin" / "spark-submit.cmd")
+        candidates.append(pyspark_home / "bin" / "spark-submit")
+    except ImportError:
+        pass
     for candidate in candidates:
         if candidate.exists():
             return [str(candidate)]
@@ -155,19 +162,32 @@ def run_graphx(df: pd.DataFrame) -> tuple[bool, str]:
     df.to_csv(input_path, index=False)
 
     if submit is not None and JAR.exists():
-        for old_result in (OUTPUT / "pagerank_results.csv", OUTPUT / "communities_results.csv", OUTPUT / "graph_stats.json"):
-            old_result.unlink(missing_ok=True)
-        cmd = submit + ["--class", "com.socialanalyzer.SocialNetworkAnalyzer", "--master", "local[*]", "--conf", "spark.driver.memory=2g", str(JAR), str(input_path), str(OUTPUT)]
+        cmd = submit + [
+            "--class", "com.socialanalyzer.SocialNetworkAnalyzer",
+            "--master", "local[1]",
+            "--conf", "spark.driver.memory=512m",
+            "--conf", "spark.executor.memory=512m",
+            str(JAR),
+            str(input_path),
+            str(OUTPUT)
+        ]
         try:
             proc = subprocess.run(cmd, cwd=ROOT, capture_output=True, text=True, timeout=900, encoding="utf-8", errors="replace")
             log = (proc.stdout or "") + "\n" + (proc.stderr or "")
             (OUTPUT / "spark_run.log").write_text(log, encoding="utf-8")
-            if proc.returncode != 0 or "GRAPHX_SUCCESS" not in log:
-                return False, log[-9000:] or f"Spark exited with code {proc.returncode}."
-            return True, log[-3000:]
+            if proc.returncode == 0 and "GRAPHX_SUCCESS" in log:
+                return True, log[-3000:]
+            # If Spark failed in this container environment (e.g. JVM/OOM), fall back seamlessly
+            ok, fb_log = run_standalone_engine(df, input_path, OUTPUT)
+            if ok:
+                return True, f"[Notice: spark-submit exited with code {proc.returncode}; fallback engine succeeded]\n" + fb_log
+            return False, log[-9000:] or f"Spark exited with code {proc.returncode}."
         except subprocess.TimeoutExpired:
             return False, "Spark execution exceeded 15 minutes. Try a smaller edge list or increase the timeout in app.py."
         except Exception as exc:
+            ok, fb_log = run_standalone_engine(df, input_path, OUTPUT)
+            if ok:
+                return True, f"[Notice: could not launch Spark ({exc}); fallback engine succeeded]\n" + fb_log
             return False, f"Could not launch Spark: {exc}"
 
     return run_standalone_engine(df, input_path, OUTPUT)

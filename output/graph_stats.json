@@ -1,0 +1,20 @@
+{
+  "vertices": 60,
+  "edges": 180,
+  "components": 3,
+  "engine": "Apache Spark GraphX 3.5.3",
+  "component_sizes": [
+    {
+      "component_id": "1",
+      "size": 20
+    },
+    {
+      "component_id": "21",
+      "size": 20
+    },
+    {
+      "component_id": "41",
+      "size": 20
+    }
+  ]
+}
